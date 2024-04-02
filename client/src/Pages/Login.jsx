@@ -1,34 +1,104 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
+import PasswordToggle from "../components/PasswordToggle";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
+import { UserContext } from "../UserContext";
 
 const Login = () => {
-	const [email, setEmail] = useState("");
+	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
-    return (
+	const [redirect, setRedirect] = useState(false);
+	const [passwordInputType, ToggleIcon] = PasswordToggle();
+
+	const { setUsername: setLoggedInUsername, setId } = useContext(UserContext);
+
+	const toastOptions = {
+		position: "bottom-right",
+		autoClose: 5000,
+		pauseOnHover: true,
+		draggable: true,
+		theme: "dark",
+	};
+
+	async function login(e) {
+		e.preventDefault();
+		if (handleValidation()) {
+			try {
+				const { data } = await axios.post("/login", {
+					username,
+					password,
+				});
+				if (data.status === false) {
+					toast.error(data.msg, toastOptions);
+				} else {
+					setLoggedInUsername(username);
+					setId(data.id);
+					setRedirect(true);
+				}
+			} catch (err) {
+				console.log(err);
+			}
+		}
+	}
+
+	const handleValidation = () => {
+		if (username === "") {
+			toast.error("Username is required!", toastOptions);
+			return false;
+		} else if (password === "") {
+			toast.error("Password is required!", toastOptions);
+			return false;
+		} else {
+			return true;
+		}
+	};
+
+	if (redirect) {
+		return <Navigate to="/" />
+	}
+
+	return (
 		<div className="bg-blue-50 w-full h-screen flex items-center justify-center">
-			<form className="max-w-md mx-auto mb-64">
+			<form
+				className="sm:w-[396.8px] w-64 mx-auto mb-64"
+				onSubmit={login}
+			>
 				<h1 className="text-4xl font-semibold mb-6 text-center">
 					Login
 				</h1>
 				<input
-					type="email"
-					placeholder="email"
-					value={email}
-					onChange={(ev) => setEmail(ev.target.value)}
+					type="text"
+					placeholder="username"
+					value={username}
+					onChange={(ev) => setUsername(ev.target.value)}
 				/>
-				<input
-					type="password"
-					placeholder="password"
-					value={password}
-					onChange={(ev) => setPassword(ev.target.value)}
-				/>
-				<button className="bg-blue-500 text-white block w-full rounded-lg p-2">
+				<div className="relative">
+					<input
+						type={passwordInputType}
+						placeholder="Password"
+						value={password}
+						onChange={(ev) => setPassword(ev.target.value)}
+					/>
+					<span className="absolute right-3 bottom-[15px]">
+						{ToggleIcon}
+					</span>
+				</div>
+				<button
+					type="submit"
+					className="bg-blue-500 text-white block w-full rounded-lg p-2"
+				>
 					Login
 				</button>
 				<p className="text-center mt-2">
 					Don't have an account?{" "}
-					<a className="underline cursor-pointer">Register</a>
+					<Link className="underline" to="/register">
+						Register
+					</Link>
 				</p>
 			</form>
+			<ToastContainer />
 		</div>
 	);
 };
