@@ -6,6 +6,7 @@ import { UserContext } from "../UserContext";
 import { Link, Navigate } from "react-router-dom";
 import PasswordToggle from "../components/PasswordToggle";
 import PasswordStrengthBar from "react-password-strength-bar";
+import GoogleIcon from "@mui/icons-material/Google";
 
 const Register = () => {
 	const [username, setUsername] = useState("");
@@ -72,14 +73,18 @@ const Register = () => {
 		}
 	}
 
+	const loginWithGoogle = () => {
+		window.open("http://localhost:5000/auth/google/callback", "_self");
+	};
+
 	if (redirect) {
 		return <Navigate to="/" />;
 	}
 
 	return (
-		<div className="relative bg-blue-50 w-full h-screen flex items-center justify-center">
+		<div className="relative bg-blue-50 w-full h-screen flex flex-col items-center justify-center">
 			<form
-				className="sm:max-w-md max-w-64 mx-auto mb-64"
+				className="sm:max-w-md max-w-64 mx-auto"
 				onSubmit={register}
 			>
 				<h1 className="text-4xl font-semibold mb-6 text-center">
@@ -106,11 +111,15 @@ const Register = () => {
 						onFocus={() => setPasswordFocus(true)}
 						onBlur={() => setPasswordFocus(false)}
 					/>
-					<span className="absolute right-3 bottom-[15px]">
-						{ToggleIcon}
-					</span>
+					{password.length > 0 && (
+						<span className="absolute right-3 bottom-[15px] cursor-pointer">
+							{ToggleIcon}
+						</span>
+					)}
 				</div>
-				{password.length > 0 && passwordFocus && <PasswordStrengthBar className="px-5" password={password} />}
+				{password.length > 0 && passwordFocus && (
+					<PasswordStrengthBar className="px-5" password={password} />
+				)}
 				<input
 					type="password"
 					placeholder="Confirm Password"
@@ -130,6 +139,12 @@ const Register = () => {
 					</Link>
 				</p>
 			</form>
+			<button
+				className="mt-5 mb-64 sm:w-[396.8px] w-64 mx-auto bg-white py-[5px] border border-black rounded-md"
+				onClick={loginWithGoogle}
+			>
+				<GoogleIcon /> Sign in with Google
+			</button>
 			<ToastContainer />
 		</div>
 	);

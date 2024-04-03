@@ -7,10 +7,13 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
 const app = express();
+const session = require("express-session");
+const passport = require("passport");
+const OAuth2Strategy = require("passport-google-oauth2").Strategy;
 
 const PORT = process.env.PORT;
 
-const jwtSecret = process.env.JWT_SECRET;
+const jwtSecret = process.env.SECRET;
 
 const bcryptSalt = bcrypt.genSaltSync(10);
 
@@ -22,6 +25,14 @@ app.use(
 	cors({
 		credentials: true,
 		origin: process.env.CLIENT_URL,
+	})
+);
+
+app.use(
+	session({
+		secret: process.env.SECRET,
+		resave: false,
+		saveUninitialized: true,
 	})
 );
 
@@ -47,7 +58,10 @@ app.post("/login", async (req, res) => {
 		const { username, password } = req.body;
 		const foundUser = await User.findOne({ username });
 		if (foundUser) {
-			const correctPassword = bcrypt.compareSync(password, foundUser.password);
+			const correctPassword = bcrypt.compareSync(
+				password,
+				foundUser.password
+			);
 			if (correctPassword) {
 				jwt.sign(
 					{ userId: foundUser._id, username },
@@ -102,6 +116,66 @@ app.post("/register", async (req, res) => {
 	} catch (err) {
 		res.status(500).json("error");
 	}
+});
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(
+	new OAuth2Strategy(
+		{
+			clientID: process.env.GOOGLE_CLIENT_ID,  
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+			callbackURL: "/auth/google/callback",
+			scope: ["profile", "email"],
+		},
+		async (accessToken, refreshToken, profile, done) => {
+			try {
+				var user = await User.findOne({ googleID: profile.id });
+				if (!user) {
+					user = await User.create({
+						googleID: profile.id,
+						username: profile.displayName,
+						email: profile.emails[0].value,
+						image: profile.photos[0].value,
+					});
+				}
+				return done(null, user);
+			} catch (err) {
+				return done(err, null);
+			}
+		}
+	)
+);
+
+passport.serializeUser((user, done) => {
+	done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+	done(null, user);
+});
+
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+app.get("/auth/google/callback", passport.authenticate("google", {
+	successRedirect: "http://localhost:5173/",
+	failureRedirect: "http://localhost:5173/login"
+}));
+
+app.get("/login/success", (req, res) => {
+	if (req.user) {
+		res.status(200).json(req.user);
+	} else {
+		res.status(500).json("not authorized");
+	}
+});
+
+app.get("/logout", (req, res, next) => {
+	req.logout((err) => {
+		if (err) return next(err);
+		res.redirect("http://localhost:5173/");
+	});
 });
 
 app.listen(PORT, () => {
