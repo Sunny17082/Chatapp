@@ -6,7 +6,6 @@ import { UserContext } from "../UserContext";
 import { Link, Navigate } from "react-router-dom";
 import PasswordToggle from "../components/PasswordToggle";
 import PasswordStrengthBar from "react-password-strength-bar";
-import GoogleIcon from "@mui/icons-material/Google";
 
 const Register = () => {
 	const [username, setUsername] = useState("");
@@ -73,18 +72,14 @@ const Register = () => {
 		}
 	}
 
-	const loginWithGoogle = () => {
-		window.open("http://localhost:5000/auth/google/callback", "_self");
-	};
-
 	if (redirect) {
-		return <Navigate to="/" />;
+		return <Navigate to="/chat" />;
 	}
 
 	return (
 		<div className="relative bg-blue-50 w-full h-screen flex flex-col items-center justify-center">
 			<form
-				className="sm:max-w-md max-w-64 mx-auto"
+				className="sm:max-w-md max-w-64 mx-auto mb-64 login-register"
 				onSubmit={register}
 			>
 				<h1 className="text-4xl font-semibold mb-6 text-center">
@@ -139,12 +134,6 @@ const Register = () => {
 					</Link>
 				</p>
 			</form>
-			<button
-				className="mt-5 mb-64 sm:w-[396.8px] w-64 mx-auto bg-white py-[5px] border border-black rounded-md"
-				onClick={loginWithGoogle}
-			>
-				<GoogleIcon /> Sign in with Google
-			</button>
 			<ToastContainer />
 		</div>
 	);

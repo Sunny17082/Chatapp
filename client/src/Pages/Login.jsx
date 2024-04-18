@@ -5,7 +5,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { UserContext } from "../UserContext";
-import GoogleIcon from "@mui/icons-material/Google";
 
 const Login = () => {
 	const [username, setUsername] = useState("");
@@ -56,17 +55,13 @@ const Login = () => {
 		}
 	};
 
-	const loginWithGoogle = () => {
-		window.open("http://localhost:5000/auth/google/callback", "_self");
-	}
-
 	if (redirect) {
-		return <Navigate to="/" />
+		return <Navigate to="/chat" />
 	}
 
 	return (
 		<div className="bg-blue-50 w-full h-screen flex flex-col items-center justify-center">
-			<form className="sm:w-[396.8px] w-64 mx-auto" onSubmit={login}>
+			<form className="sm:w-[396.8px] w-64 mx-auto mb-64 login-register" onSubmit={login}>
 				<h1 className="text-4xl font-semibold mb-6 text-center">
 					Login
 				</h1>
@@ -102,9 +97,6 @@ const Login = () => {
 					</Link>
 				</p>
 			</form>
-			<button className="mt-5 mb-64 sm:w-[396.8px] w-64 mx-auto bg-white py-[5px] border border-black rounded-md" onClick={loginWithGoogle}>
-				<GoogleIcon /> Sign in with Google
-			</button>
 			<ToastContainer />
 		</div>
 	);

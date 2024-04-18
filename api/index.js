@@ -6,10 +6,8 @@ const User = require("./models/User");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const bcrypt = require("bcrypt");
+const ws = require("ws");
 const app = express();
-const session = require("express-session");
-const passport = require("passport");
-const OAuth2Strategy = require("passport-google-oauth2").Strategy;
 
 const PORT = process.env.PORT;
 
@@ -25,14 +23,6 @@ app.use(
 	cors({
 		credentials: true,
 		origin: process.env.CLIENT_URL,
-	})
-);
-
-app.use(
-	session({
-		secret: process.env.SECRET,
-		resave: false,
-		saveUninitialized: true,
 	})
 );
 
@@ -118,66 +108,12 @@ app.post("/register", async (req, res) => {
 	}
 });
 
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(
-	new OAuth2Strategy(
-		{
-			clientID: process.env.GOOGLE_CLIENT_ID,  
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-			callbackURL: "/auth/google/callback",
-			scope: ["profile", "email"],
-		},
-		async (accessToken, refreshToken, profile, done) => {
-			try {
-				var user = await User.findOne({ googleID: profile.id });
-				if (!user) {
-					user = await User.create({
-						googleID: profile.id,
-						username: profile.displayName,
-						email: profile.emails[0].value,
-						image: profile.photos[0].value,
-					});
-				}
-				return done(null, user);
-			} catch (err) {
-				return done(err, null);
-			}
-		}
-	)
-);
-
-passport.serializeUser((user, done) => {
-	done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-	done(null, user);
-});
-
-app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-
-app.get("/auth/google/callback", passport.authenticate("google", {
-	successRedirect: "http://localhost:5173/",
-	failureRedirect: "http://localhost:5173/login"
-}));
-
-app.get("/login/success", (req, res) => {
-	if (req.user) {
-		res.status(200).json(req.user);
-	} else {
-		res.status(500).json("not authorized");
-	}
-});
-
-app.get("/logout", (req, res, next) => {
-	req.logout((err) => {
-		if (err) return next(err);
-		res.redirect("http://localhost:5173/");
-	});
-});
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
 	console.log(`Server started on Port ${PORT}...`);
+});
+
+const wss = new ws.WebSocketServer({ server });
+
+wss.on("connection", (connection) => {
+	console.log("connected");
 });
